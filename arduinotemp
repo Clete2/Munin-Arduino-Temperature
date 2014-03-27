@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+=head1 NAME
+arduinotemp - Munin plugin to receive temperature from an Arduino running a webserver.
+
+=head1 CONFIGURATION
+ln -s /usr/libexec/munin/plugins/arduinotemp /etc/munin/plugins/arduinotemp
+
+Set the $ipAddress variable below.
+Set the $tempx variables below to give each temp a graph title.
+
+=cut
+
+use LWP::Simple;
+
+# URL to use.
+$address = "http://192.168.1.209/";
+# Don't use spaces in the array below.
+# Name the sensors in order in the array.
+@tempName = ("Indoor","Outdoor");
+
+if($ARGV[0] eq "config"){
+	# Configuration for the main page graph.
+	print "multigraph temperature\n";
+	print "graph_title Temperature\n";
+	print "graph_vlabel degrees\n";
+	print "graph_category sensors\n";
+	for my $temp (@tempName){
+		print "$temp.label $temp\n";
+	}
+	
+	print "\n";
+
+	# Configuration for the individual graphs.
+	for my $temp (@tempName){
+		print "multigraph temperature.$temp\n";
+		print "graph_title $temp Temperature\n";
+		print "$temp.label $temp\n\n";
+	}
+	exit;
+}
+
+# Get the data
+$sensorDatum = get($address);
+
+# Parse the data
+@sensorData = split /<br \/>/, $sensorDatum;
+
+# Print the main graph.
+print "multigraph temperature\n";
+$i = 0;
+for my $temp (@tempName){
+	print "$sensorData[$i]\n";
+	$i++;
+}
+print "\n";
+
+$i = 0;
+for my $temp(@tempName){
+	print "multigraph temperature.$temp\n";
+	print "$sensorData[$i]\n";
+	$i++;
+}
+print "\n";
